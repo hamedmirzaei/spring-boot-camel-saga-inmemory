@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+    <title>Saga Demo</title>
+
+    <link rel="stylesheet" th:href="@{jquery-ui.css}"/>
+    <link rel="stylesheet" th:href="@{bootstrap.min.css}"/>
+    <style>
+        .table-hover tbody tr:hover td, .table-hover tbody tr:hover th {
+            background-color: #d8d9de;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="#">Saga Demo</a>
+        </div>
+        <ul class="nav navbar-nav">
+            <li class="active"><a href="/">Menu 1</a></li>
+            <li><a href="/">Menu 2</a></li>
+            <li><a href="/">Menu 3</a></li>
+        </ul>
+    </div>
+</nav>
+<br>
+<br>
+
+<div class="row text-center pagination-centered" style="width: 90%; margin-left: 5%;">
+    <div class="col-xs-6">
+        <h2 th:text="${msg}"/>
+        <!--<div class="container">-->
+        <!--<div class="page-header">-->
+            <!--<h3>Customer Information Service</h3>-->
+        <!--</div>-->
+
+        <!--<table class="table table-striped table-bordered table-hover table-condensed">-->
+            <!--<tr>-->
+                <!--<td>ID</td>-->
+                <!--<td>Cif Number</td>-->
+                <!--<td>Customer Type</td>-->
+                <!--<td>Base Info ID</td>-->
+            <!--</tr>-->
+            <!--<tr th:each="customer: ${customers}">-->
+                <!--<td th:text="${customer.id}">ID</td>-->
+                <!--<td th:text="${customer.cifNumber}">Cif Number</td>-->
+                <!--<td th:text="${customer.customerType}">Customer Type</td>-->
+                <!--<td th:text="${customer.baseInfoId}">Base Info ID</td>-->
+            <!--</tr>-->
+        <!--</table>-->
+        <!--</div>-->
+    </div>
+    <div class="col-xs-6">
+    </div>
+</div>
+
+<br>
+<footer class="footer navbar-inverse navbar-fixed-bottom">
+    <div class="container text-center pagination-centered text-muted">
+        @Copyright 2019 Hamed Mirzaei
+    </div>
+</footer>
+
+<script th:src="@{jquery-1.12.4.min.js}"></script>
+<script th:src="@{jquery-ui.min.js}"></script>
+</body>
+</html>
