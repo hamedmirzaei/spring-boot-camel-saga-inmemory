@@ -1,6 +1,7 @@
 package spring.boot.apache.camel.saga.in.memory.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import spring.boot.apache.camel.saga.in.memory.model.AccountBankB;
 import spring.boot.apache.camel.saga.in.memory.repository.AccountBankBRepository;
 
@@ -8,19 +9,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@Service
 public class AccountBankBService {
 
     @Autowired
-    AccountBankBRepository accountRepository;
+    AccountBankBRepository accountBankBRepository;
 
     public List<AccountBankB> findAll() {
         List<AccountBankB> accounts = new ArrayList<>();
-        accountRepository.findAll().forEach(accounts::add);
+        accountBankBRepository.findAll().forEach(accounts::add);
         return accounts;
     }
 
     public AccountBankB findOne(Long id) {
-        Optional<AccountBankB> account = accountRepository.findById(id);
+        Optional<AccountBankB> account = accountBankBRepository.findById(id);
         if (account.isPresent())
             return account.get();
         else
@@ -31,9 +33,17 @@ public class AccountBankBService {
         AccountBankB account = findOne(id);
         if (account.getId() != -1) {
             account.setAmount(account.getAmount() + add);
-            return accountRepository.save(account);
-        } else {
-            return account;
+            return accountBankBRepository.save(account);
         }
+        return account;
+    }
+
+    public AccountBankB decreaseAmount(Long id, Long subtract) throws RuntimeException {
+        AccountBankB account = findOne(id);
+        if (account.getId() != -1) {
+            account.setAmount(account.getAmount() - subtract);
+            accountBankBRepository.save(account);
+        }
+        return account;
     }
 }

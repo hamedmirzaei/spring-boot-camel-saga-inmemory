@@ -4,18 +4,18 @@ import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import spring.boot.apache.camel.saga.in.memory.service.AccountBankAService;
+import spring.boot.apache.camel.saga.in.memory.service.AccountBankBService;
 
 @Component
-public class BankADebitProcessor implements Processor {
+public class BankBCreditProcessor implements Processor {
 
     @Autowired
-    AccountBankAService accountBankAService;
+    AccountBankBService accountBankBService;
 
     @Override
     public void process(Exchange exchange) throws Exception {
         Long id = Long.valueOf(exchange.getIn().getHeader("id").toString());
         Long amount = Long.valueOf(exchange.getIn().getHeader("amount").toString());
-        accountBankAService.decreaseAmount(id, amount);
+        accountBankBService.increaseAmount(id, amount);
     }
 }

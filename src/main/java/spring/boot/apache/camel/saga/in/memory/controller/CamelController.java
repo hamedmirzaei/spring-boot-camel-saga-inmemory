@@ -2,14 +2,12 @@ package spring.boot.apache.camel.saga.in.memory.controller;
 
 import org.apache.camel.CamelContext;
 import org.apache.camel.ProducerTemplate;
-import org.apache.camel.builder.RouteBuilder;
-import org.apache.camel.impl.DefaultCamelContext;
-import org.apache.camel.impl.saga.InMemorySagaService;
-import org.apache.camel.util.jndi.JndiContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import spring.boot.apache.camel.saga.in.memory.service.AccountBankAService;
+import spring.boot.apache.camel.saga.in.memory.service.AccountBankBService;
 
 @Controller
 public class CamelController {
@@ -17,21 +15,30 @@ public class CamelController {
     @Autowired
     CamelContext camelContext;
 
+    @Autowired
+    AccountBankAService accountBankAService;
+
+    @Autowired
+    AccountBankBService accountBankBService;
+
     @GetMapping("/transfer")
     public String transferMoney(Model model) {
         try {
             ProducerTemplate template = camelContext.createProducerTemplate();
-            camelContext.start();
             template.sendBody("direct:transfer", "This is bean example");
-            model.addAttribute("msg", "Success");
+            model.addAttribute("msg", "Successful Saga");
         } catch (Exception e) {
-            model.addAttribute("msg", "Failure");
-        } finally {
-            try {
-                //camelContext.stop();
-            } catch (Exception ex) {
-            }
+            model.addAttribute("msg", "Failed Saga");
         }
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        model.addAttribute("bankAAccounts", accountBankAService.findAll());
+        model.addAttribute("bankBAccounts", accountBankBService.findAll());
 
         return "index";
     }

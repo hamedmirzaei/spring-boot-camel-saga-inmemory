@@ -9,7 +9,11 @@ import org.apache.camel.model.SagaPropagation;
 import org.apache.camel.model.rest.RestParamType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import spring.boot.apache.camel.saga.in.memory.processor.BankACreditProcessor;
 import spring.boot.apache.camel.saga.in.memory.processor.BankADebitProcessor;
+import spring.boot.apache.camel.saga.in.memory.processor.BankBCreditProcessor;
+import spring.boot.apache.camel.saga.in.memory.processor.BankBDebitProcessor;
+import spring.boot.apache.camel.saga.in.memory.service.AccountBankAService;
 
 import java.util.Random;
 
@@ -19,22 +23,43 @@ public class CamelConfiguration extends RouteBuilder {
     @Autowired
     CamelContext camelContext;
 
+    @Autowired
+    AccountBankAService accountBankAService;
+
+    @Autowired
+    BankADebitProcessor bankADebitProcessor;
+
+    @Autowired
+    BankACreditProcessor bankACreditProcessor;
+
+    @Autowired
+    BankBDebitProcessor bankBDebitProcessor;
+
+    @Autowired
+    BankBCreditProcessor bankBCreditProcessor;
+
     @Override
     public void configure() throws Exception {
 
         camelContext.addService(new InMemorySagaService());
         restConfiguration().port(8381).host("localhost");
 
-        //from("jetty:http://localhost:8080/transfer")
         from("direct:transfer")
                 .removeHeaders("CamelHttp*")
                 .saga()
-                .setHeader("id", constant((int)(Math.random() * 6 + 1)))
+                .process(new Processor() {
+                    @Override
+                    public void process(Exchange exchange) throws Exception {
+                        exchange.getIn().setHeader("id", new Random(System.currentTimeMillis()).nextInt(7));
+                        exchange.getIn().setHeader("amount", new Random(System.currentTimeMillis()).nextInt(100000) + 1);
+                    }
+                })
                 .log("############################ Id= ${header[id]}")
-                .setHeader("amount", constant((int)(Math.random() * 1000000 + 1)))
                 .log("############################ Amount= ${header[amount]}")
                 .setHeader(Exchange.HTTP_METHOD, constant("POST"))
                 .log("############################ Executing saga #${header.id}")
+                .multicast()
+                .parallelProcessing()
                 .to("http4://localhost:8381/bank-a")
                 .to("http4://localhost:8381/bank-b");
 
@@ -50,9 +75,10 @@ public class CamelConfiguration extends RouteBuilder {
                     .option("amount", header("amount"))
                     .compensation("direct:cancelDebit")
                 .log("############################ Debit ${header.amount}$ for account #${header.id} is going to be done...")
-                .process(new BankADebitProcessor())
+                .process(bankADebitProcessor)
                 .log("############################ Debit for account #${header.id} done");
         from("direct:cancelDebit")
+                .process(bankACreditProcessor)
                 .log("############################ Debit for account #${header.id} has been cancelled");
 
 
@@ -73,12 +99,16 @@ public class CamelConfiguration extends RouteBuilder {
                         exchange.getIn().setHeader("random-x", new Random(System.currentTimeMillis()).nextInt(100));
                     }
                 })
+                .process(bankBCreditProcessor)
                 .log("############################ random-x = ${header[random-x]}")
                 .choice()
                     .when(header("random-x").isGreaterThan(85))
                         .throwException(new RuntimeException("Random failure during payment"))
                 .log("############################ Credit for account #${header.id} done");
         from("direct:cancelCredit")
+                .process(bankBDebitProcessor)
                 .log("############################ Credit for account #${header.id} has been cancelled");
+
+        camelContext.start();
     }
 }

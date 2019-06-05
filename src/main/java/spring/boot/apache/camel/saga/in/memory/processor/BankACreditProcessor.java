@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import spring.boot.apache.camel.saga.in.memory.service.AccountBankAService;
 
 @Component
-public class BankADebitProcessor implements Processor {
+public class BankACreditProcessor implements Processor {
 
     @Autowired
     AccountBankAService accountBankAService;
@@ -16,6 +16,6 @@ public class BankADebitProcessor implements Processor {
     public void process(Exchange exchange) throws Exception {
         Long id = Long.valueOf(exchange.getIn().getHeader("id").toString());
         Long amount = Long.valueOf(exchange.getIn().getHeader("amount").toString());
-        accountBankAService.decreaseAmount(id, amount);
+        accountBankAService.increaseAmount(id, amount);
     }
 }
