@@ -31,7 +31,7 @@ public class AccountBankAService {
 
     public AccountBankA increaseAmount(Long id, Long add) {
         AccountBankA account = findOne(id);
-        if (account.getId() != -1) {
+        if (account.getId() != -1 && "ACTIVE".equals(account.getStatus())) {
             account.setAmount(account.getAmount() + add);
             return accountBankARepository.save(account);
         }
@@ -40,10 +40,18 @@ public class AccountBankAService {
 
     public AccountBankA decreaseAmount(Long id, Long subtract) throws RuntimeException {
         AccountBankA account = findOne(id);
-        if (account.getId() != -1) {
-            account.setAmount(account.getAmount() - subtract);
-            accountBankARepository.save(account);
-        }
+
+        // exception handling
+        if (account.getId() == -1)
+            throw new IllegalStateException("Bank A account #" + id + " does not exist");
+        if (!"ACTIVE".equals(account.getStatus()))
+            throw new IllegalStateException("Bank A account #" + id + " is not ACTIVE");
+
+        account.setAmount(account.getAmount() - subtract);
+        accountBankARepository.save(account);
+        if (account.getAmount() < 0)
+            throw new IllegalArgumentException("Bank A account #" + id + " amount is less than " + subtract);
+
         return account;
     }
 }

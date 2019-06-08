@@ -50,7 +50,7 @@ public class CamelConfiguration extends RouteBuilder {
                 .process(new Processor() {
                     @Override
                     public void process(Exchange exchange) throws Exception {
-                        exchange.getIn().setHeader("id", new Random(System.currentTimeMillis()).nextInt(7));
+                        exchange.getIn().setHeader("id", new Random(System.currentTimeMillis()).nextInt(7) + 1);
                         exchange.getIn().setHeader("amount", new Random(System.currentTimeMillis()).nextInt(100000) + 1);
                     }
                 })
@@ -75,7 +75,12 @@ public class CamelConfiguration extends RouteBuilder {
                     .option("amount", header("amount"))
                     .compensation("direct:cancelDebit")
                 .log("############################ Debit ${header.amount}$ for account #${header.id} is going to be done...")
-                .process(bankADebitProcessor)
+                .doTry()
+                    .process(bankADebitProcessor)
+                .doCatch(IllegalArgumentException.class, IllegalStateException.class)
+                    .log("############################ " + exceptionMessage().toString())
+                    .throwException(new RuntimeException("############################ Debit for account #${header.id} failed"))
+                .endDoTry()
                 .log("############################ Debit for account #${header.id} done");
         from("direct:cancelDebit")
                 .process(bankACreditProcessor)
@@ -99,10 +104,15 @@ public class CamelConfiguration extends RouteBuilder {
                         exchange.getIn().setHeader("random-x", new Random(System.currentTimeMillis()).nextInt(100));
                     }
                 })
-                .process(bankBCreditProcessor)
+                .doTry()
+                    .process(bankBCreditProcessor)
+                .doCatch(IllegalStateException.class)
+                    .log("############################ " + exceptionMessage().toString())
+                    .throwException(new RuntimeException("############################ Credit for account #${header.id} failed"))
+                .endDoTry()
                 .log("############################ random-x = ${header[random-x]}")
                 .choice()
-                    .when(header("random-x").isGreaterThan(85))
+                    .when(header("random-x").isGreaterThan(101))
                         .throwException(new RuntimeException("Random failure during payment"))
                 .log("############################ Credit for account #${header.id} done");
         from("direct:cancelCredit")

@@ -31,16 +31,20 @@ public class AccountBankBService {
 
     public AccountBankB increaseAmount(Long id, Long add) {
         AccountBankB account = findOne(id);
-        if (account.getId() != -1) {
-            account.setAmount(account.getAmount() + add);
-            return accountBankBRepository.save(account);
-        }
-        return account;
+
+        // exception handling
+        if (account.getId() == -1)
+            throw new IllegalStateException("Bank B account #" + id + " does not exist");
+        if (!"ACTIVE".equals(account.getStatus()))
+            throw new IllegalStateException("Bank B account #" + id + " is not ACTIVE");
+
+        account.setAmount(account.getAmount() + add);
+        return accountBankBRepository.save(account);
     }
 
     public AccountBankB decreaseAmount(Long id, Long subtract) throws RuntimeException {
         AccountBankB account = findOne(id);
-        if (account.getId() != -1) {
+        if (account.getId() != -1 && "ACTIVE".equals(account.getStatus())) {
             account.setAmount(account.getAmount() - subtract);
             accountBankBRepository.save(account);
         }
