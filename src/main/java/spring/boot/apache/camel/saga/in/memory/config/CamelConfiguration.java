@@ -16,6 +16,7 @@ import spring.boot.apache.camel.saga.in.memory.processor.BankBDebitProcessor;
 import spring.boot.apache.camel.saga.in.memory.service.AccountBankAService;
 
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 @Configuration
 public class CamelConfiguration extends RouteBuilder {
@@ -47,6 +48,7 @@ public class CamelConfiguration extends RouteBuilder {
         from("direct:transfer")
                 .removeHeaders("CamelHttp*")
                 .saga()
+                .timeout(2, TimeUnit.MINUTES)
                 .process(new Processor() {
                     @Override
                     public void process(Exchange exchange) throws Exception {
@@ -59,9 +61,9 @@ public class CamelConfiguration extends RouteBuilder {
                 .setHeader(Exchange.HTTP_METHOD, constant("POST"))
                 .log("############################ Executing saga #${header.id}")
                 .multicast()
-                .parallelProcessing()
-                .to("http4://localhost:8381/bank-a")
-                .to("http4://localhost:8381/bank-b");
+                    .parallelProcessing()
+                    .to("http4://localhost:8381/bank-a")
+                    .to("http4://localhost:8381/bank-b");
 
 
 
@@ -74,6 +76,8 @@ public class CamelConfiguration extends RouteBuilder {
                     .option("id", header("id"))
                     .option("amount", header("amount"))
                     .compensation("direct:cancelDebit")
+                    .completion("direct:completeDebit")
+                    .transform().header(Exchange.SAGA_LONG_RUNNING_ACTION)
                 .log("############################ Debit ${header.amount}$ for account #${header.id} is going to be done...")
                 .doTry()
                     .process(bankADebitProcessor)
@@ -85,6 +89,9 @@ public class CamelConfiguration extends RouteBuilder {
         from("direct:cancelDebit")
                 .process(bankACreditProcessor)
                 .log("############################ Debit for account #${header.id} has been cancelled");
+        from("direct:completeDebit")
+                .transform().header(Exchange.SAGA_LONG_RUNNING_ACTION)
+                .log("############################ Debit for account #${header.id} has been completed");
 
 
 
@@ -97,6 +104,8 @@ public class CamelConfiguration extends RouteBuilder {
                     .option("id", header("id"))
                     .option("amount", header("amount"))
                     .compensation("direct:cancelCredit")
+                    .completion("direct:completeCredit")
+                    .transform().header(Exchange.SAGA_LONG_RUNNING_ACTION)
                 .log("############################ Credit ${header.amount}$ for account #${header.id} is going to be done...")
                 .process(new Processor() {
                     @Override
@@ -118,7 +127,9 @@ public class CamelConfiguration extends RouteBuilder {
         from("direct:cancelCredit")
                 .process(bankBDebitProcessor)
                 .log("############################ Credit for account #${header.id} has been cancelled");
-
+        from("direct:completeCredit")
+                .transform().header(Exchange.SAGA_LONG_RUNNING_ACTION)
+                .log("############################ Credit for account #${header.id} has been completed");
         camelContext.start();
     }
 }
