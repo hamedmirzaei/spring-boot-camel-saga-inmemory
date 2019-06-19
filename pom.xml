@@ -8,10 +8,10 @@
         <version>2.1.5.RELEASE</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>spring-boot-apache-camel-saga-in-memory</groupId>
-    <artifactId>apache-camel-saga-in-memory</artifactId>
+    <groupId>spring-boot-apache-camel</groupId>
+    <artifactId>spring-boot-camel-saga-inmemory</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>Apache Camel In Memory Saga</name>
+    <name>spring-boot-camel-saga-inmemory</name>
     <description>Demo project for Spring Boot Saga In Memory</description>
 
     <properties>
